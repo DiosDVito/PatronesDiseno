@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import PedidoForm from '../../componentes/PedidoForm'
+import axiosInstance from '../../config/axios';
+
+// Configurar axios por defecto
+axiosInstance.defaults.headers.common['Content-Type'] = 'application/json';
+axiosInstance.defaults.headers.common['Accept'] = 'application/json';
 
 function Dashboard() {
   const [users, setUsers] = useState([]);
@@ -14,33 +17,43 @@ function Dashboard() {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/users');
+      const response = await axiosInstance.get('/users');
       setUsers(response.data);
+      setError(null); // Limpiar error si la petición es exitosa
     } catch (err) {
-      setError('Error al cargar usuarios: ' + err.message);
+      console.error('Error completo:', err);
+      const errorMessage = err.response?.data?.message || err.message;
+      setError(`Error al cargar usuarios: ${errorMessage}`);
+      setUsers([]); // Limpiar usuarios en caso de error
     }
   };
 
   const handleUpdateUser = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:8080/users/${editingUser.id}`, editingUser);
+      await axiosInstance.put(`/users/${editingUser.id}`, editingUser);
       setSuccess('Usuario actualizado exitosamente');
+      setError(null);
       setEditingUser(null);
       fetchUsers();
     } catch (err) {
-      setError('Error al actualizar usuario: ' + err.message);
+      const errorMessage = err.response?.data?.message || err.message;
+      setError(`Error al actualizar usuario: ${errorMessage}`);
+      setSuccess(null);
     }
   };
 
   const handleDeleteUser = async (userId) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
       try {
-        await axios.delete(`http://localhost:8080/users/${userId}`);
+        await axiosInstance.delete(`/users/${userId}`);
         setSuccess('Usuario eliminado exitosamente');
+        setError(null);
         fetchUsers();
       } catch (err) {
-        setError('Error al eliminar usuario: ' + err.message);
+        const errorMessage = err.response?.data?.message || err.message;
+        setError(`Error al eliminar usuario: ${errorMessage}`);
+        setSuccess(null);
       }
     }
   };

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '../../config/axios';
 
 function Home() {
   const [newUser, setNewUser] = useState({
@@ -14,11 +14,14 @@ function Home() {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:8080/users', newUser);
+      await axiosInstance.post('/users', newUser);
       setSuccess('Usuario creado exitosamente');
+      setError(null);
       setNewUser({ email: '', password: '', role: 'guest', formData: {} });
     } catch (err) {
-      setError('Error al crear usuario: ' + err.message);
+      const errorMessage = err.response?.data?.message || err.message;
+      setError(`Error al crear usuario: ${errorMessage}`);
+      setSuccess(null);
     }
   };
 

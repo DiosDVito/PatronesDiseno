@@ -4,19 +4,25 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.app.factory.AdminFormFieldFactory;
+import com.example.app.factory.FormFieldFactory;
+import com.example.app.factory.GuestFormFieldFactory;
 import com.example.app.model.FormField;
 import com.example.app.model.LoginRequest;
 import com.example.app.service.FirebaseFormService;
-import com.example.app.factory.FormFieldFactory;
-import com.example.app.factory.AdminFormFieldFactory;
-import com.example.app.factory.GuestFormFieldFactory;
 
 @RestController
 @RequestMapping("/form")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 public class FormController {
 
     private final FirebaseFormService firebaseFormService;

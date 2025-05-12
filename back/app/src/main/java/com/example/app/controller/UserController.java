@@ -1,5 +1,6 @@
 package com.example.app.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -16,24 +17,40 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.app.factory.AdminUserFactory;
+import com.example.app.factory.GuestUserFactory;
+import com.example.app.factory.UserFactory;
 import com.example.app.model.User;
-import com.example.app.service.UserService;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.cloud.FirestoreClient;
 
 @RestController
 @RequestMapping("/users")
 @CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 public class UserController {
 
-    private final UserService userService;
+    private final Firestore firestore;
+    private static final String COLLECTION_NAME = "users";
 
-    public UserController(UserService userService) {
-        this.userService = userService;
+    public UserController(FirebaseApp firebaseApp) {
+        this.firestore = FirestoreClient.getFirestore(firebaseApp);
     }
 
     @GetMapping
     public List<User> getAllUsers() {
         try {
-            return userService.getAllUsers();
+            List<User> users = new ArrayList<>();
+            var documents = firestore.collection(COLLECTION_NAME).get().get().getDocuments();
+            
+            for (QueryDocumentSnapshot document : documents) {
+                User user = document.toObject(User.class);
+                user.setId(document.getId());
+                users.add(user);
+            }
+            
+            return users;
         } catch (ExecutionException | InterruptedException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
                 "Error al obtener usuarios: " + e.getMessage());
@@ -43,7 +60,19 @@ public class UserController {
     @PostMapping
     public User createUser(@RequestBody User user) {
         try {
-            return userService.createUser(user);
+            UserFactory factory;
+            if ("admin".equals(user.getRole())) {
+                factory = new AdminUserFactory();
+            } else {
+                factory = new GuestUserFactory();
+            }
+            
+            User createdUser = factory.createUser(user.getEmail(), user.getPassword(), user.getFormData());
+            var docRef = firestore.collection(COLLECTION_NAME).document();
+            createdUser.setId(docRef.getId());
+            
+            docRef.set(createdUser).get();
+            return createdUser;
         } catch (ExecutionException | InterruptedException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
                 "Error al crear usuario: " + e.getMessage());
@@ -53,8 +82,22 @@ public class UserController {
     @PutMapping("/{id}")
     public User updateUser(@PathVariable String id, @RequestBody User user) {
         try {
-            user.setId(id);
-            return userService.updateUser(user);
+            UserFactory factory;
+            if ("admin".equals(user.getRole())) {
+                factory = new AdminUserFactory();
+            } else {
+                factory = new GuestUserFactory();
+            }
+            
+            User updatedUser = factory.createUser(user.getEmail(), user.getPassword(), user.getFormData());
+            updatedUser.setId(id);
+            
+            firestore.collection(COLLECTION_NAME)
+                    .document(id)
+                    .set(updatedUser)
+                    .get();
+            
+            return updatedUser;
         } catch (ExecutionException | InterruptedException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
                 "Error al actualizar usuario: " + e.getMessage());
@@ -64,7 +107,10 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable String id) {
         try {
-            userService.deleteUser(id);
+            firestore.collection(COLLECTION_NAME)
+                    .document(id)
+                    .delete()
+                    .get();
             return ResponseEntity.ok().build();
         } catch (ExecutionException | InterruptedException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
@@ -75,7 +121,18 @@ public class UserController {
     @GetMapping("/{id}")
     public User getUser(@PathVariable String id) {
         try {
-            return userService.getUser(id);
+            var document = firestore.collection(COLLECTION_NAME)
+                    .document(id)
+                    .get()
+                    .get();
+            
+            if (!document.exists()) {
+                throw new IllegalArgumentException("User not found with id: " + id);
+            }
+            
+            User user = document.toObject(User.class);
+            user.setId(document.getId());
+            return user;
         } catch (ExecutionException | InterruptedException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
                 "Error al obtener usuario: " + e.getMessage());
