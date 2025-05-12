@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import PedidoForm from '../../componentes/PedidoForm'
 
-function Dashboard() {
+function UserManagement() {
   const [users, setUsers] = useState([]);
+  const [newUser, setNewUser] = useState({
+    email: '',
+    password: '',
+    role: 'guest',
+    formData: {}
+  });
   const [editingUser, setEditingUser] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
+  // Fetch users on component mount
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -18,6 +24,18 @@ function Dashboard() {
       setUsers(response.data);
     } catch (err) {
       setError('Error al cargar usuarios: ' + err.message);
+    }
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post('http://localhost:8080/users', newUser);
+      setSuccess('Usuario creado exitosamente');
+      setNewUser({ email: '', password: '', role: 'guest', formData: {} });
+      fetchUsers();
+    } catch (err) {
+      setError('Error al crear usuario: ' + err.message);
     }
   };
 
@@ -51,6 +69,11 @@ function Dashboard() {
         ...prev,
         formData: { ...prev.formData, [field]: value }
       }));
+    } else {
+      setNewUser(prev => ({
+        ...prev,
+        formData: { ...prev.formData, [field]: value }
+      }));
     }
   };
 
@@ -70,6 +93,51 @@ function Dashboard() {
         </div>
       )}
 
+      {/* Formulario de creación de usuario */}
+      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h3 className="text-xl font-semibold mb-4">Crear Nuevo Usuario</h3>
+        <form onSubmit={handleCreateUser} className="space-y-4">
+          <div>
+            <label className="block mb-1">Email:</label>
+            <input
+              type="email"
+              value={newUser.email}
+              onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
+              className="w-full border p-2 rounded"
+              required
+            />
+          </div>
+          <div>
+            <label className="block mb-1">Contraseña:</label>
+            <input
+              type="password"
+              value={newUser.password}
+              onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
+              className="w-full border p-2 rounded"
+              required
+            />
+          </div>
+          <div>
+            <label className="block mb-1">Rol:</label>
+            <select
+              value={newUser.role}
+              onChange={(e) => setNewUser(prev => ({ ...prev, role: e.target.value }))}
+              className="w-full border p-2 rounded"
+            >
+              <option value="guest">Guest</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Crear Usuario
+          </button>
+        </form>
+      </div>
+
+      {/* Lista de usuarios */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <h3 className="text-xl font-semibold mb-4">Usuarios Existentes</h3>
         <div className="space-y-4">
@@ -196,4 +264,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+export default UserManagement; 

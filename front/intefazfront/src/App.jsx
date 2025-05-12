@@ -10,9 +10,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./pages/Navbar/Navbar";
 import Default from "./pages/mainPages/Default";
 import Home from "./pages/mainpages/Home";
-import About from "./pages/mainpages/About";
-import Dashbord from "./pages/mainpages/Dashbord";
-
+import Dashboard from "./pages/mainpages/Dashbord";
 
 function App() {
   return (
@@ -24,8 +22,7 @@ function App() {
         <div className="content">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/dashbord" element={<Dashbord />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="*" element={<Default />} />
           </Routes>
         </div>

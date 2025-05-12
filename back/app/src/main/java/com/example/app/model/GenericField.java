@@ -18,16 +18,19 @@ public class GenericField implements FormField {
     }
 
     // Método para obtener el tipo del campo de formulario.
+    @Override
     public String getType() { 
         return type; 
     }
 
     // Método para obtener la etiqueta del campo de formulario.
+    @Override
     public String getLabel() { 
         return label; 
     }
 
     // Método para verificar si el campo es obligatorio o no.
+    @Override
     public boolean isRequired() { 
         return required; 
     }
